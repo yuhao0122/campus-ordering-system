@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="校園點餐系統商家商品管理介面，僅供課堂本機展示。">
+  <title>商品管理｜校園點餐系統</title>
+  <!-- Bootstrap is optional for local preview; fallback styles below retain usability offline. -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; --ink: #162435; --muted: #637286; --line: #e4eaf0; --brand: #0d6b65; --brand-dark: #085650; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: #f5f7fa; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+    .site-header { background: #fff; border-bottom: 1px solid var(--line); }
+    .site-header-inner { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 18px 0; }
+    .brand { font-size: 1.1rem; font-weight: 800; letter-spacing: .015em; }
+    .brand small { display: block; font-size: .76rem; margin-top: .18rem; font-weight: 500; color: var(--muted); }
+    .pill { border: 1px solid #c8d9d5; background: #f1f8f6; color: #1d6257; border-radius: 999px; font-size: .75rem; padding: .3rem .7rem; font-weight: 600; }
+    .page-wrap { max-width: 1060px; padding: 34px 18px 64px; margin: auto; }
+    .heading { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; }
+    h1 { font-size: clamp(1.55rem, 4vw, 2rem); font-weight: 800; letter-spacing: -.025em; margin: 0 0 6px; }
+    h2 { font-size: 1.08rem; font-weight: 800; margin: 0; }
+    .subheading, .muted { color: var(--muted); }
+    .subheading { margin: 0; font-size: .94rem; }
+    .grid { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(360px, 1.45fr); gap: 22px; align-items: start; }
+    .panel { background: white; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 5px 25px rgba(20, 39, 59, .035); }
+    .panel-head { padding: 23px 24px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-body { padding: 10px 24px 24px; }
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-weight: 650; margin-bottom: 8px; font-size: .94rem; }
+    .field input { display: block; padding: 12px 14px; width: 100%; min-height: 46px; border-radius: 9px; border: 1px solid #cbd5df; outline-offset: 2px; background: white; }
+    .field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(13, 107, 101, .12); }
+    .field input[aria-invalid="true"] { border-color: #bb3542; }
+    .field-hint { font-size: .79rem; margin: 7px 0 0; color: var(--muted); }
+    .field-error { font-size: .82rem; color: #b42332; margin: 6px 0 0; }
+    .btn-primary-custom { border: 1px solid var(--brand); background: var(--brand); color: white; font-weight: 650; border-radius: 9px; padding: 11px 18px; cursor: pointer; }
+    .btn-primary-custom:hover { background: var(--brand-dark); }
+    .btn-primary-custom:disabled { opacity: .56; cursor: not-allowed; }
+    .btn-light-custom { border: 1px solid #d2dce5; background: white; border-radius: 8px; padding: 8px 12px; cursor: pointer; color: var(--ink); }
+    .btn-light-custom:disabled { opacity: .6; cursor: not-allowed; }
+    .full-width { width: 100%; }
+    .notice { border: 1px solid #dfb76b; background: #fff9ed; color: #705013; border-radius: 10px; padding: 12px 16px; font-size: .88rem; margin-bottom: 18px; line-height: 1.6; }
+    .message { border: 1px solid; border-radius: 9px; padding: 11px 13px; margin-bottom: 16px; font-size: .88rem; }
+    .message[data-kind="success"] { background: #eef9f2; border-color: #a9d5bc; color: #205e38; }
+    .message[data-kind="error"] { background: #fff1f1; border-color: #edbdc1; color: #922735; }
+    .count { color: var(--muted); font-size: .84rem; white-space: nowrap; }
+    .table-wrap { width: 100%; overflow-x: auto; padding: 0 24px 20px; }
+    .products-table { border-collapse: collapse; width: 100%; min-width: 420px; }
+    .products-table th { padding: 12px 10px; border-bottom: 1px solid var(--line); background: #f7f9fb; font-size: .8rem; font-weight: 700; color: #657388; text-align: left; }
+    .products-table td { padding: 15px 10px; border-bottom: 1px solid #edf1f4; font-size: .92rem; }
+    .products-table tr:last-child td { border-bottom: none; }
+    .right { text-align: right !important; }
+    .state { font-size: .77rem; border-radius: 99px; padding: 5px 9px; font-weight: 650; white-space: nowrap; }
+    .state.active { color: #187347; background: #e8f7ee; }
+    .state.inactive { color: #765b22; background: #f9f0d9; }
+    .empty { text-align: center; color: var(--muted); padding: 35px 20px 42px; }
+    .empty strong { display: block; color: var(--ink); margin-bottom: 5px; }
+    .panel-foot { padding: 13px 24px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); }
+    .callout { margin-top: 24px; font-size: .82rem; color: #718096; }
+    @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } .page-wrap { padding: 24px 14px; } .panel-head { padding: 20px 18px 10px; } .panel-body { padding: 12px 18px 20px; } .table-wrap { padding: 0 12px 16px; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="page-wrap site-header-inner" style="padding-top: 0; padding-bottom: 0;">
+      <div class="brand">校園點餐系統 <small>Campus Ordering · Merchant</small></div>
+      <span class="pill">單一商家 · 課堂展示版</span>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <div class="heading">
+      <div>
+        <h1>商品管理</h1>
+        <p class="subheading">新增商品、確認價格與查看目前商品清單。</p>
+      </div>
+      <a id="ordersLink" class="btn-light-custom" href="/merchant/orders" style="text-decoration:none; display:inline-block;">查看學生訂單 →</a>
+    </div>
+
+    <div id="demoBanner" class="notice" role="status" hidden>
+      <strong>示範模式：</strong>目前使用瀏覽器內的模擬商品資料。新增商品只會顯示在這個頁面，重新整理後會重設；<strong>不會寫入 SQLite</strong>。
+    </div>
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="newProductTitle">
+        <div class="panel-head"><h2 id="newProductTitle">新增商品</h2></div>
+        <div class="panel-body">
+          <p class="muted" style="font-size:.85rem; margin:0 0 22px">輸入商品資訊，新增後將出現在商品列表。</p>
+          <div id="formMessage" class="message" role="status" aria-live="polite" hidden></div>
+          <form id="productForm" novalidate>
+            <div class="field">
+              <label for="productName">商品名稱 <span aria-hidden="true" style="color:#b42332">*</span></label>
+              <input id="productName" name="name" type="text" maxlength="100" placeholder="例如：雞腿便當" autocomplete="off" required aria-describedby="nameHelp nameError">
+              <p id="nameHelp" class="field-hint">必填，最多 100 個字。</p>
+              <p id="nameError" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="productPrice">售價（NT$）<span aria-hidden="true" style="color:#b42332"> *</span></label>
+              <input id="productPrice" name="price" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="例如：85" autocomplete="off" required aria-describedby="priceHelp priceError">
+              <p id="priceHelp" class="field-hint">必填，只接受大於 0 的整數。</p>
+              <p id="priceError" class="field-error" hidden></p>
+            </div>
+            <button id="submitButton" class="btn-primary-custom full-width" type="submit">新增商品</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="productsTitle">
+        <div class="panel-head">
+          <div>
+            <h2 id="productsTitle">商品列表</h2>
+            <div id="productCount" class="count" aria-live="polite">讀取中…</div>
+          </div>
+          <button id="refreshButton" class="btn-light-custom" type="button">重新整理</button>
+        </div>
+        <div id="listMessage" class="message" role="alert" style="margin: 6px 24px 8px" hidden></div>
+        <div id="loadingState" class="empty" role="status">正在載入商品資料…</div>
+        <div id="emptyState" class="empty" hidden><strong>目前還沒有商品</strong>請在左側表單新增第一項商品。</div>
+        <div id="tableWrap" class="table-wrap" hidden>
+          <table class="products-table">
+            <thead><tr><th scope="col">商品名稱</th><th scope="col" class="right">售價</th><th scope="col" class="right">上架狀態</th></tr></thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+        </div>
+        <div class="panel-foot">商品上架狀態由後端 <code>is_active</code> 欄位提供，本 Sprint 不提供下架操作。</div>
+      </section>
+    </div>
+
+    <p class="callout">本系統為單一商家本機展示專案，未實作身份驗證，請勿上線供公開使用或輸入真實敏感資料。</p>
+  </main>
+  <!-- Works both at /templates/merchant.html in static demo and /merchant in Flask. -->
+  <script src="../static/merchant.js" defer></script>
+</body>
+</html>

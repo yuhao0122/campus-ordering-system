@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="校園點餐系統商家訂單管理介面，僅供課堂本機展示。">
+  <title>訂單管理｜校園點餐系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; --ink: #162435; --muted: #637286; --line: #e4eaf0; --brand: #0d6b65; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin:0; background:#f5f7fa; color:var(--ink); font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+    .site-header { background:#fff; border-bottom:1px solid var(--line); }
+    .site-header-inner { max-width:1060px; margin:auto; min-height:76px; padding:14px 18px; display:flex; justify-content:space-between; gap:14px; align-items:center; flex-wrap:wrap; }
+    .brand { font-size:1.1rem; font-weight:800; }
+    .brand small { display:block; color:var(--muted); font-size:.75rem; font-weight:500; }
+    .pill { background:#f1f8f6; border:1px solid #c8d9d5; color:#1d6257; border-radius:99px; padding:6px 11px; font-size:.76rem; font-weight:650; }
+    .page-wrap { max-width:1060px; margin:0 auto; padding:33px 18px 60px; }
+    .heading { display:flex; align-items:end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:23px; }
+    h1 { font-size:clamp(1.55rem,4vw,2rem); font-weight:800; margin:0 0 6px; }
+    h2 { font-size:1.06rem; font-weight:800; margin:0; }
+    .muted { color:var(--muted); }
+    .subheading { color:var(--muted); font-size:.93rem; margin:0; }
+    .btn-light-custom { display:inline-block; border:1px solid #d2dce5; background:#fff; border-radius:9px; padding:9px 14px; cursor:pointer; color:var(--ink); text-decoration:none; font-size:.9rem; }
+    .btn-light-custom:hover { background:#f3f6f8; }
+    .btn-light-custom:disabled { opacity:.6; cursor:not-allowed; }
+    .notice { border:1px solid #dfb76b; background:#fff9ed; color:#705013; border-radius:10px; padding:12px 16px; font-size:.87rem; margin-bottom:18px; line-height:1.6; }
+    .message { border:1px solid #edbdc1; background:#fff1f1; color:#922735; border-radius:9px; padding:12px 14px; margin:0 0 18px; font-size:.9rem; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+    .count { color:var(--muted); font-size:.9rem; }
+    .order-list { display:grid; grid-template-columns:1fr; gap:16px; }
+    .order-card { background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:0 5px 25px rgba(20,39,59,.035); overflow:hidden; }
+    .order-head { padding:20px 24px; display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .order-id { font-size:1.07rem; font-weight:800; }
+    .order-time { color:var(--muted); font-size:.81rem; margin-top:5px; }
+    .state { display:inline-block; font-size:.8rem; border-radius:99px; padding:6px 11px; font-weight:700; }
+    .state.paid { color:#187347; background:#e8f7ee; }
+    .state.unpaid { color:#8f5d12; background:#fff2d9; }
+    .table-wrap { padding:0 24px 10px; overflow-x:auto; }
+    .orders-table { width:100%; min-width:460px; border-collapse:collapse; }
+    .orders-table th { background:#f7f9fb; color:#657388; padding:11px 12px; text-align:left; font-size:.79rem; }
+    .orders-table td { padding:14px 12px; border-bottom:1px solid #edf1f4; font-size:.9rem; }
+    .orders-table tr:last-child td { border-bottom:0; }
+    .right { text-align:right !important; }
+    .order-total { display:flex; align-items:baseline; justify-content:flex-end; gap:15px; background:#fbfcfd; border-top:1px solid var(--line); padding:16px 24px; }
+    .order-total span { color:var(--muted); font-size:.87rem; }
+    .order-total strong { color:var(--brand); font-size:1.2rem; }
+    .empty { text-align:center; background:white; border:1px solid var(--line); border-radius:16px; color:var(--muted); padding:45px 20px; }
+    .empty strong { display:block; color:var(--ink); margin-bottom:5px; }
+    .footnote { color:#718096; font-size:.82rem; margin-top:22px; line-height:1.7; }
+    @media(max-width:650px) { .page-wrap {padding:24px 14px 46px;} .order-head {padding:17px 16px;} .table-wrap {padding:0 12px 8px;} .order-total {padding:14px 16px;} }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="brand">校園點餐系統 <small>Campus Ordering · Merchant</small></div>
+      <span class="pill">單一商家 · 課堂展示版</span>
+    </div>
+  </header>
+  <main class="page-wrap">
+    <div class="heading">
+      <div>
+        <h1>訂單管理</h1>
+        <p class="subheading">查看學生訂購內容、訂單總額及模擬付款狀態。</p>
+      </div>
+      <a id="productsLink" class="btn-light-custom" href="/merchant">← 返回商品管理</a>
+    </div>
+    <div id="ordersDemoBanner" class="notice" role="status" hidden>
+      <strong>示範模式：</strong>目前顯示固定的模擬訂單資料，並非 SQLite 真實訂單。
+      此頁僅提供「查看」功能，不會修改付款狀態。
+    </div>
+    <div class="toolbar">
+      <h2>學生訂單 <span id="ordersCount" class="count" aria-live="polite">讀取中…</span></h2>
+      <button id="ordersRefreshButton" class="btn-light-custom" type="button">重新整理</button>
+    </div>
+    <div id="ordersError" class="message" role="alert" hidden></div>
+    <div id="ordersLoading" class="empty" role="status">正在讀取訂單資料…</div>
+    <div id="ordersEmpty" class="empty" hidden><strong>目前沒有學生訂單</strong>當學生成功建立訂單後，訂單會顯示在此處。</div>
+    <div id="ordersList" class="order-list" aria-live="polite" hidden></div>
+    <p class="footnote">付款狀態僅顯示系統記錄的 <code>unpaid</code>（未付款）與 <code>paid</code>（已付款），不代表真實金流交易完成。本系統沒有登入及權限控管，僅適用本機課堂展示。</p>
+  </main>
+  <script src="../static/merchant.js" defer></script>
+</body>
+</html>
