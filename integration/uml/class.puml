@@ -1,0 +1,8 @@
+@startuml
+' Draft; pending A/B/C review
+entity Product { * id : INTEGER <<PK>>\n--\nname : TEXT\nprice : INTEGER }
+entity Order { * id : INTEGER <<PK>>\n--\ntotal_amount : INTEGER\npayment_status : TEXT\ncreated_at : TEXT }
+entity OrderItem { * id : INTEGER <<PK>>\n--\norder_id : INTEGER <<FK>>\nproduct_id : INTEGER <<FK>>\nquantity : INTEGER\nunit_price : INTEGER }
+Order ||--o{ OrderItem
+Product ||--o{ OrderItem
+@enduml
