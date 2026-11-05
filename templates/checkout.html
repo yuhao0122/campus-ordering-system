@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}結帳／付款｜校園點餐系統{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">結帳／付款</h1>
+  <p class="text-secondary mb-0">請先確認訂單內容，再進行模擬付款。</p>
+</div>
+
+<div class="alert alert-warning" role="alert">
+  本頁為<strong>模擬付款／測試流程</strong>，不會進行真實扣款，也不會收集信用卡或銀行資料。
+</div>
+
+{% if cart_items %}
+  <div class="card mb-4">
+    <div class="card-header">訂單內容</div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">商品</th>
+            <th scope="col">單價</th>
+            <th scope="col">數量</th>
+            <th scope="col">小計</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_items %}
+            <tr>
+              <td>{{ item.name }}</td>
+              <td>NT${{ item.unit_price }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>NT${{ item.subtotal }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div class="fs-5">訂單總金額：<span class="fw-bold text-primary">NT${{ total }}</span></div>
+      <form method="post" action="{{ url_for('create_order') }}">
+        <button class="btn btn-primary" type="submit">確認訂單／送出訂單</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">付款</div>
+    <div class="card-body">
+      {% if order %}
+        <p class="mb-3">訂單編號：<strong>{{ order.id }}</strong>，目前狀態：{{ '已付款' if order.payment_status == 'paid' else '未付款' }}</p>
+        {% if order.payment_status == 'paid' %}
+          <div class="alert alert-success mb-0" role="alert">付款成功，訂單已成立。</div>
+        {% else %}
+          <form method="post" action="{{ url_for('mock_payment') }}">
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+            <button class="btn btn-success" type="submit">模擬付款</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <p class="text-secondary mb-0">送出訂單後，即可在此進行模擬付款。</p>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 bg-light">
+    <div class="card-body text-center py-5">
+      <p class="fs-5 mb-2">目前沒有可結帳的商品</p>
+      <p class="text-secondary mb-4">請先將商品加入購物車。</p>
+      <a class="btn btn-primary" href="{{ url_for('menu') }}">前往菜單</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('menu') }}">校園點餐系統</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="切換導覽">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'menu' }}" href="{{ url_for('menu') }}">學生菜單</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'cart' }}" href="{{ url_for('cart') }}">購物車</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'checkout' }}" href="{{ url_for('checkout') }}">結帳／付款</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'merchant_products' }}" href="{{ url_for('merchant_products') }}">商家商品管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.endpoint == 'merchant_orders' }}" href="{{ url_for('merchant_orders') }}">商家訂單</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

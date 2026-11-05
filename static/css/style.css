@@ -1,0 +1,24 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.product-image {
+  height: 180px;
+  object-fit: cover;
+}
+
+.product-image-placeholder {
+  background-color: #e9ecef;
+}
+
+.quantity-input {
+  max-width: 6rem;
+}
+
+.navbar-brand {
+  letter-spacing: 0.02em;
+}
+
+.table {
+  --bs-table-bg: #fff;
+}
