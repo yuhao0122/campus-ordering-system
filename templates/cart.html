@@ -48,11 +48,21 @@
     </table>
   </div>
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-top pt-3">
-    <div class="fs-5">商品總額：<span class="fw-bold text-primary">NT${{ total }}</span></div>
-    <a class="btn btn-primary" href="{{ url_for('checkout') }}">前往結帳</a>
+  <div class="row justify-content-end mt-4">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5 card-title">結帳預覽</h2>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary">商品總額</span>
+            <span class="fs-4 fw-bold text-primary">NT${{ total }}</span>
+          </div>
+          <p class="small text-secondary mb-3">金額僅供預覽，正式訂單金額由後端重新計算。</p>
+          <a class="btn btn-primary w-100" href="{{ url_for('checkout') }}">結帳付款</a>
+        </div>
+      </div>
+    </div>
   </div>
-  <p class="small text-secondary mt-3 mb-0">畫面上的總額僅供參考，正式訂單金額由後端重新計算。</p>
 {% else %}
   <div class="card border-0 bg-light">
     <div class="card-body text-center py-5">

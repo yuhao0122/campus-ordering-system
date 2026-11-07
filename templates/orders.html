@@ -23,7 +23,7 @@
       <tbody>
         {% for order in orders %}
           <tr>
-            <td>{{ order.id }}</td>
+            <td>{{ order.order_id }}</td>
             <td>
               {% for item in order.items %}
                 <div>{{ item.name }} × {{ item.quantity }}</div>
