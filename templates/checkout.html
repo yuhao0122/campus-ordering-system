@@ -1,51 +1,111 @@
 {% extends "base.html" %}
+{% from "partials/order_summary.html" import order_summary %}
 
-{% block title %}付款｜校園點餐系統{% endblock %}
+{% block title %}結帳｜校園點餐系統{% endblock %}
 
 {% block content %}
+{% if merchant_groups is defined and merchant_groups %}
+  {% set groups = merchant_groups %}
+{% elif cart_items is defined and cart_items %}
+  {% set groups = [{'merchant_name': none, 'items': cart_items, 'subtotal': total | default(0)}] %}
+{% else %}
+  {% set groups = [] %}
+{% endif %}
+
+{% if orders is defined and orders %}
+  {% set order_list = orders %}
+{% elif order is defined and order %}
+  {% set order_list = [order] %}
+{% else %}
+  {% set order_list = [] %}
+{% endif %}
+
 <div class="mb-3">
-  <h1 class="h3 mb-1">付款</h1>
-  <p class="text-secondary mb-0">確認金額後送出訂單，再進行模擬付款。</p>
+  <h1 class="h3 mb-1">結帳</h1>
+  <p class="text-secondary mb-0">確認訂單摘要後送出建立訂單，再進行模擬付款。</p>
 </div>
 
 <div class="alert alert-warning" role="alert">
   本頁為<strong>模擬付款／測試流程</strong>，不會進行真實扣款，也不會收集信用卡或銀行資料。
 </div>
 
-{% if cart_items %}
+{% if groups %}
   <div class="card mb-4">
-    <div class="card-header">付款確認</div>
-    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <div>
-        <div class="small text-secondary">應付總金額</div>
-        <div class="fs-4 fw-bold text-primary">NT${{ total }}</div>
-        <div class="small text-secondary">商品明細與金額已於購物車頁確認。</div>
-      </div>
-      <form method="post" action="{{ url_for('create_order') }}">
-        <button class="btn btn-primary" type="submit">確認訂單／送出訂單</button>
-      </form>
-    </div>
+    <div class="card-header">訂單商品摘要</div>
+    {{ order_summary(groups, false) }}
   </div>
 
-  <div class="card">
-    <div class="card-header">付款</div>
-    <div class="card-body">
-      {% if order %}
-        <p class="mb-3">訂單編號：<strong>{{ order.order_id }}</strong>，目前狀態：{{ '已付款' if order.payment_status == 'paid' else '未付款' }}</p>
-        {% if order.payment_status == 'paid' %}
-          <div class="alert alert-success mb-0" role="alert">付款成功，訂單已成立。</div>
-        {% else %}
-          <form method="post" action="{{ url_for('mock_payment') }}">
-            <input type="hidden" name="order_id" value="{{ order.order_id }}">
-            <button class="btn btn-success" type="submit">模擬付款</button>
+  <div class="row justify-content-end mb-4">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary">訂單總額</span>
+            <span class="fs-4 fw-bold text-primary">NT${{ total | default(0) }}</span>
+          </div>
+          <p class="small text-secondary mb-3">金額由後端依資料庫重新計算，前端僅供顯示。</p>
+          <form method="post" action="{{ url_for('create_order') }}">
+            {% if idempotency_key is defined and idempotency_key %}
+              <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
+            {% endif %}
+            <button class="btn btn-primary w-100" type="submit">確認送出訂單</button>
           </form>
-        {% endif %}
-      {% else %}
-        <p class="text-secondary mb-0">送出訂單後，即可在此進行模擬付款。</p>
-      {% endif %}
+        </div>
+      </div>
     </div>
   </div>
-{% else %}
+{% endif %}
+
+{% if order_list %}
+  <div class="card">
+    <div class="card-header">模擬付款狀態</div>
+    <div class="card-body">
+      {% for current_order in order_list %}
+        <div class="border rounded p-3 {{ 'mb-3' if not loop.last }}">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+            <div>
+              <div class="fw-semibold">訂單編號：{{ current_order.order_id }}</div>
+              {% if current_order.merchant_name %}
+                <div class="small text-secondary">商家：{{ current_order.merchant_name }}</div>
+              {% endif %}
+              {% if current_order.created_at %}
+                <div class="small text-secondary">建立時間：{{ current_order.created_at }}</div>
+              {% endif %}
+            </div>
+            {% if current_order.payment_status == 'paid' %}
+              <span class="badge text-bg-success">已付款</span>
+            {% else %}
+              <span class="badge text-bg-warning">未付款</span>
+            {% endif %}
+          </div>
+
+          {% if current_order['items'] %}
+            <ul class="list-unstyled small mb-2">
+              {% for item in current_order['items'] %}
+                <li class="d-flex justify-content-between gap-3">
+                  <span class="text-break">{{ item.name }} × {{ item.quantity }}</span>
+                  <span class="text-nowrap">NT${{ item.subtotal }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="text-secondary">訂單總額：<span class="fw-bold text-primary">NT${{ current_order.total }}</span></div>
+            {% if current_order.payment_status == 'paid' %}
+              <div class="alert alert-success mb-0 py-2 px-3" role="alert">付款成功，訂單已成立。</div>
+            {% else %}
+              <form method="post" action="{{ url_for('mock_payment') }}">
+                <input type="hidden" name="order_id" value="{{ current_order.order_id }}">
+                <button class="btn btn-success" type="submit">模擬付款</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% elif not groups %}
   <div class="card border-0 bg-light">
     <div class="card-body text-center py-5">
       <p class="fs-5 mb-2">目前沒有可結帳的商品</p>

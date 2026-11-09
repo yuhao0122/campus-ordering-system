@@ -11,8 +11,21 @@ body {
   background-color: #e9ecef;
 }
 
+.product-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
 .quantity-input {
   max-width: 6rem;
+}
+
+.cart-summary {
+  position: sticky;
+  top: 1rem;
 }
 
 .navbar-brand {
