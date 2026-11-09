@@ -1,0 +1,70 @@
+{# 共用訂單摘要：購物車（可編輯）與結帳頁（唯讀）共用，確保兩頁顯示一致。
+   參數：
+   - groups: list[{ merchant_name, items, subtotal }]
+   - editable: 是否顯示數量更新與移除表單 #}
+{% macro order_summary(groups, editable=false) %}
+{% set columns = 5 if editable else 4 %}
+<div class="table-responsive">
+  <table class="table align-middle bg-white mb-0">
+    <thead>
+      <tr>
+        <th scope="col">商品</th>
+        <th scope="col" class="text-nowrap">單價</th>
+        <th scope="col" class="text-nowrap">數量</th>
+        <th scope="col" class="text-nowrap">小計</th>
+        {% if editable %}
+          <th scope="col" class="text-end">操作</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in groups %}
+        {% set group_index = loop.index %}
+        {% if group.merchant_name %}
+          <tr class="table-light">
+            <th colspan="{{ columns }}" scope="colgroup">
+              <span class="text-secondary small">商家</span>
+              <span class="ms-1 fw-semibold">{{ group.merchant_name }}</span>
+            </th>
+          </tr>
+        {% endif %}
+
+        {% for item in group['items'] %}
+          <tr data-cart-row data-unit-price="{{ item.unit_price }}" data-quantity="{{ item.quantity }}" data-merchant-group="{{ group_index }}">
+            <td class="text-break">{{ item.name }}</td>
+            <td class="text-nowrap">NT${{ item.unit_price }}</td>
+            <td>
+              {% if editable %}
+                <form class="d-flex gap-2" method="post" action="{{ url_for('update_cart') }}">
+                  <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                  <input class="form-control form-control-sm quantity-input js-quantity" type="number" name="quantity" value="{{ item.quantity }}" min="1" step="1" required aria-label="{{ item.name }} 數量">
+                  <button class="btn btn-sm btn-outline-primary text-nowrap" type="submit">更新</button>
+                </form>
+              {% else %}
+                <span class="js-quantity-value">{{ item.quantity }}</span>
+              {% endif %}
+            </td>
+            <td class="text-nowrap js-line-subtotal">NT${{ item.subtotal }}</td>
+            {% if editable %}
+              <td class="text-end">
+                <form method="post" action="{{ url_for('remove_cart_item') }}">
+                  <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                  <button class="btn btn-sm btn-outline-danger text-nowrap" type="submit">移除</button>
+                </form>
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+
+        {% if group.merchant_name %}
+          <tr>
+            <td colspan="{{ columns - 2 if editable else columns - 1 }}" class="text-end text-secondary">商家小計</td>
+            <td class="text-nowrap fw-semibold" data-merchant-subtotal="{{ group_index }}">NT${{ group.subtotal }}</td>
+            {% if editable %}<td></td>{% endif %}
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}

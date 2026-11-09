@@ -1,1 +1,1 @@
-"""Campus Ordering System backend package."""
+"""COS backend package."""
