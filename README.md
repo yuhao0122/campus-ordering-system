@@ -1,41 +1,49 @@
 # COS 校園點餐系統
 
-三人一週 Agile + AI 專題的最小共用骨架。暫定採 Flask、Jinja2、SQLite、本機單一商家且不含登入；模擬付款形式仍待團隊／老師確認，禁止公開部署或串接真實金流。
+以 Flask、Jinja2 與 SQLite 實作的校園點餐 Demo。UI 採伺服器端渲染及 HTML 表單 POST；價格、商家、總額與付款狀態都由後端判定，不信任瀏覽器輸入。本專案只有模擬付款，不得用於真實金流或公開部署。
 
-## Windows PowerShell 快速開始
+## Windows PowerShell 啟動
 
-在 Repository 根目錄執行（不必啟用 `Activate.ps1`）：
+在 Repository 根目錄執行：
 
 ```powershell
-py --version
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m flask --app backend.app init-db
+.\.venv\Scripts\python.exe -m flask --app app init-db
 .\.venv\Scripts\python.exe -m backend.seed
 .\.venv\Scripts\python.exe run.py
 ```
 
-若沒有 `py`，將 `py` 改為 `python`。`init-db` 不清除既有資料。服務只監聽 `127.0.0.1:5000`。
+若舊版 `instance/campus_ordering.db` 已存在，`init-db` 會停止並提示 migration；保留資料的升級指令是：
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:5000/health
-Invoke-RestMethod http://127.0.0.1:5000/api/products
+.\.venv\Scripts\python.exe -m flask --app app migrate-db
+.\.venv\Scripts\python.exe -m backend.seed
+```
+
+不要直接刪除有需要保留資料的 DB。測試：
+
+```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-新增商品：
+## 頁面與表單
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:5000/api/products -ContentType 'application/json' -Body '{"name":"雞腿便當","price":85}'
-```
+| Method | 路徑 | 用途／欄位 |
+|---|---|---|
+| GET | `/menu` | 商品菜單 |
+| GET | `/cart` | 多商家購物車 |
+| POST | `/cart/add` | `product_id`, `quantity` |
+| POST | `/cart/update` | `product_id`, `quantity` |
+| POST | `/cart/remove` | `product_id` |
+| GET | `/checkout` | 結帳摘要與最近訂單 |
+| POST | `/orders/create` | `idempotency_key` |
+| POST | `/payment/mock` | `order_id` |
+| GET/POST | `/merchant/products` | 商品列表；新增欄位 `name`, `price` |
+| GET | `/merchant/orders` | 所有商家的訂單總覽 |
+| POST | `/merchant/select` | Demo 商家切換欄位 `merchant_id` |
 
-## 結構與分工
+學生以 session `cart_token` 隔離購物車／訂單；商家商品管理以 session `merchant_id` 限定目前商家，商家訂單頁則提供所有商家的訂單總覽並逐筆標示商家。seed 建立「校園食堂」與「飲料店」，預設使用第一位商家。切換路由已提供，前端切換控制可後續討論。
 
-- `backend/`、`run.py`：C 負責 Flask、SQLite、共用 API。
-- `frontend/templates/student/`：A 負責學生菜單、購物車、結帳。
-- `frontend/templates/merchant/`：B 負責商品與訂單管理。
-- `integration/`：共同維護 API 契約、測試、UML、Agile／AI 證據。
-- `instance/`：本機資料庫（Git 忽略）。
-
-已完成 health、商品查詢／新增、DB 初始化與 seed。訂單建立、查詢、模擬付款目前回傳 501；A/B 頁面刻意只留骨架。完整 API 見 `integration/api-contract.md`。
+正式 UI 契約見 `docs/ui-backend-contract.md`；後端整合摘要見 `integration/api-contract.md`。

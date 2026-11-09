@@ -1,17 +1,17 @@
-# COS API 契約
+# UI／後端整合契約入口
 
-共同規則：JSON；商品 `id`、TWD 價格與數量皆為 integer，價格／數量須為正整數；付款狀態只允許 `unpaid`、`paid`、`failed`。路由或欄位變更需 A/B/C 共同同意。商家端及測試付款無驗證，只能用於受控本機 Demo。
+本專案 UI 採用 **Flask 伺服器端渲染 + HTML 表單 POST + redirect/Flash**，不是以 JSON API 作為頁面資料來源。
 
-## 已實作
+正式且唯一的欄位、endpoint、template context 與交易契約為 [`docs/ui-backend-contract.md`](../docs/ui-backend-contract.md)。本文件只記錄後端實作邊界，避免維護兩份互相矛盾的契約。
 
-- GET `/health` → 200 `{"status":"ok"}`。
-- GET `/api/products` → 200 原始陣列，如 `[{"id":1,"name":"雞腿便當","price":85}]`，無資料為 `[]`。
-- POST `/api/products`，Content-Type `application/json`，請求 `{"name":"雞腿便當","price":85}`；成功 201 並持久化相同欄位；非法輸入 400 `{"error":{"code":"invalid_input","message":"..."}}`。空白名稱及非正整數（含 bool）價格非法。
+## 實作狀態
 
-## 待實作（占位均回 501 `not_implemented`）
+- 已實作：商品菜單、資料庫購物車、加入／更新／移除、多商家分組與後端計價。
+- 已實作：以 `(session_token, idempotency_key)` 防重複的交易式多商家建單。
+- 已實作：商品名稱／單價快照、模擬付款所有權檢查、商家商品隔離及全商家訂單總覽。
+- 已實作：`init-db`、可重複 seed、保留舊資料的 `migrate-db`。
+- `GET /health` 保留為診斷用途；沒有 UI 依賴 `/api/*` JSON 路由。
 
-- POST `/api/orders`（C；A UI）：預定請求 `{"items":[{"product_id":1,"quantity":2}]}`；後端查 DB 單價、同一交易寫訂單／明細、起始 unpaid；不信任前端金額。
-- GET `/api/orders`（C；B UI）：預定回訂單、明細、後端總額、時間與付款狀態。
-- POST `/api/orders/<order_id>/simulate-payment`（C；A UI）：形式待核准；成功才持久化 paid，失敗不得誤設 paid，重送需安全。
+## 信任邊界
 
-驗收案例：2 個 85 元雞腿便當 + 1 杯 25 元紅茶 = 195 元，正式總額由後端重算。
+瀏覽器只送 `product_id`、`quantity`、`idempotency_key` 或 `order_id`。價格、總額、商家、session token 與付款狀態一律由後端／session／資料庫決定。模擬付款僅供本機 Demo。

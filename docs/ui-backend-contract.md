@@ -1,7 +1,7 @@
 # UI / 後端整合契約（多商家購物車版）
 
-> 狀態：**設計已確認，待實作**。
-> 目前程式仍是 UI 骨架；本文件與 `docs/api-request.schema.json`、`docs/api-response.schema.json` 已更新為多商家購物車設計。
+> 狀態：**設計已確認，後端核心流程已實作並有自動測試**。
+> 本文件是 UI 與後端的正式契約；頁面採伺服器端渲染與表單 POST。
 > 金額一律由後端依資料庫計算；前端不得傳送或信任價格、總金額、付款狀態或商品所屬商家。
 
 ## 1. 設計前提
@@ -30,13 +30,13 @@
 | 模擬付款 | POST | `/payment/mock` | `order_id` | 更新單張訂單，重新導向結果頁 | 訂單不存在、非目前學生擁有、已付款、付款失敗 |
 | 商家商品管理 | GET | `/merchant/products` | 無（商家由 session 決定） | 200 `merchant.html`（`products`） | 未選擇商家、後端錯誤 |
 | 新增商品 | POST | `/merchant/products` | `name`、`price` | 重新導向 `/merchant/products`，Flash 成功訊息 | 名稱空白、價格非正數、未選擇商家 |
-| 商家訂單列表 | GET | `/merchant/orders` | 無（商家由 session 決定） | 200 `orders.html`（`orders`，僅目前商家） | 未選擇商家、後端錯誤 |
+| 商家訂單列表 | GET | `/merchant/orders` | 無 | 200 `orders.html`（所有商家的 `orders`，逐筆含商家名稱） | 後端錯誤 |
 
 重要限制：
 
 - `/cart/add`、`/cart/update`、`/cart/remove` 不接受前端傳入 `merchant_id`；後端一律由 `product_id` 查詢 `products.merchant_id`。
 - `/orders/create` 不接受前端指定商家或金額；後端依購物車商品的 `merchant_id` 分組。
-- `/merchant/products`、`/merchant/orders` 的商家範圍由 session 決定，不接受 query string 或表單傳入的 `merchant_id`。
+- `/merchant/products` 的商家範圍由 session 決定；`/merchant/orders` 是本機 Demo 的全商家總覽。兩者皆不接受 query string 或表單指定查詢範圍。
 - `products.id` 為全域唯一主鍵，因此購物車操作只需要 `product_id`。
 
 ## 3. 模板變數
@@ -51,7 +51,7 @@
 | `checkout.html` | `idempotency_key` | str | 本次結帳冪等鍵，需放在送出表單的 hidden 欄位 |
 | `checkout.html` | `orders` | list[Order] \| None | 選用；已建立訂單時顯示多張訂單與付款按鈕 |
 | `merchant.html` | `products` | list[Product] | 目前商家的商品列表（含未上架） |
-| `orders.html` | `orders` | list[Order] | 目前商家的訂單列表 |
+| `orders.html` | `orders` | list[Order] | 所有商家的訂單列表；每筆包含 `merchant_name` |
 
 ## 4. 資料欄位
 
@@ -151,7 +151,7 @@
 - `OrderItem.name`、`OrderItem.unit_price` 必須保留建立訂單當下的快照。
 - 建立多張訂單必須使用資料庫 Transaction，失敗時全部回滾。
 - 訂單建立與付款分開處理；付款狀態只由後端付款路由更新。
-- `GET /merchant/orders` 只能回傳目前 session 商家的訂單。
+- `GET /merchant/orders` 回傳全商家訂單總覽，每筆必須標示商家名稱；此設計僅供目前無登入的本機 Demo。
 - Flash message 類別沿用 Bootstrap：`success`、`danger`、`warning`、`info`。
 - 錯誤訊息以使用者可理解的中文顯示，不輸出後端堆疊。
 - 若啟用 CSRF，所有 POST 表單需帶入對應 token；UI 會依後端設定調整。
@@ -167,12 +167,11 @@
 - [x] 商品 ID 全域唯一，`merchant_id` 由後端查詢。
 - [x] 一次結帳依商家建立多張訂單，全部成功才清空購物車。
 
-## 9. 待實作清單
+## 9. 實作狀態
 
-- [ ] 建立 SQLite schema、seed 商家與商品。
-- [ ] 實作 `db.py`、購物車／訂單／付款 Service。
-- [ ] 將 `app.py` 的骨架路由接上 Service 與 session 身分。
-- [ ] 更新 `menu.html`、`cart.html`、`checkout.html`、`merchant.html`、`orders.html`。
-- [ ] 更新 request／response JSON Schema 與本契約（本次已完成）。
-- [ ] 加入多商家分組、金額、交易回滾、重複結帳、商家權限測試。
+- [x] 建立 SQLite schema、seed 商家與商品。
+- [x] 實作購物車／訂單／付款資料存取與交易邏輯。
+- [x] 將 `app.py` 路由接上資料層與 session 身分。
+- [x] 對齊 `menu.html`、`cart.html`、`checkout.html`、`merchant.html`、`orders.html` context。
+- [x] 加入多商家分組、金額、交易回滾、重複結帳、付款與商家權限測試。
 - [ ] 確認商家切換 UI 的呈現方式。
