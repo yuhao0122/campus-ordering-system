@@ -1,8 +1,17 @@
 {% extends "base.html" %}
+{% from "partials/order_summary.html" import order_summary %}
 
 {% block title %}購物車｜校園點餐系統{% endblock %}
 
 {% block content %}
+{% if merchant_groups is defined and merchant_groups %}
+  {% set groups = merchant_groups %}
+{% elif cart_items is defined and cart_items %}
+  {% set groups = [{'merchant_name': none, 'items': cart_items, 'subtotal': total | default(0)}] %}
+{% else %}
+  {% set groups = [] %}
+{% endif %}
+
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
   <div>
     <h1 class="h3 mb-1">購物車</h1>
@@ -11,54 +20,23 @@
   <a class="btn btn-outline-secondary" href="{{ url_for('menu') }}">返回菜單</a>
 </div>
 
-{% if cart_items %}
-  <div class="table-responsive">
-    <table class="table align-middle bg-white">
-      <thead>
-        <tr>
-          <th scope="col">商品</th>
-          <th scope="col">單價</th>
-          <th scope="col">數量</th>
-          <th scope="col">小計</th>
-          <th scope="col" class="text-end">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in cart_items %}
-          <tr>
-            <td>{{ item.name }}</td>
-            <td>NT${{ item.unit_price }}</td>
-            <td>
-              <form class="d-flex gap-2" method="post" action="{{ url_for('update_cart') }}">
-                <input type="hidden" name="product_id" value="{{ item.product_id }}">
-                <input class="form-control form-control-sm quantity-input" type="number" name="quantity" value="{{ item.quantity }}" min="1" required aria-label="{{ item.name }} 數量">
-                <button class="btn btn-sm btn-outline-primary text-nowrap" type="submit">更新</button>
-              </form>
-            </td>
-            <td>NT${{ item.subtotal }}</td>
-            <td class="text-end">
-              <form method="post" action="{{ url_for('remove_cart_item') }}">
-                <input type="hidden" name="product_id" value="{{ item.product_id }}">
-                <button class="btn btn-sm btn-outline-danger" type="submit">移除</button>
-              </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+{% if groups %}
+  <div class="card mb-4">
+    <div class="card-header">購物車商品</div>
+    {{ order_summary(groups, true) }}
   </div>
 
   <div class="row justify-content-end mt-4">
     <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm cart-summary">
         <div class="card-body">
           <h2 class="h5 card-title">結帳預覽</h2>
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="text-secondary">商品總額</span>
-            <span class="fs-4 fw-bold text-primary">NT${{ total }}</span>
+            <span class="fs-4 fw-bold text-primary" data-cart-total>NT${{ total | default(0) }}</span>
           </div>
-          <p class="small text-secondary mb-3">金額僅供預覽，正式訂單金額由後端重新計算。</p>
-          <a class="btn btn-primary w-100" href="{{ url_for('checkout') }}">結帳付款</a>
+          <p class="small text-secondary mb-3">金額僅供即時預覽，正式訂單金額一律由後端重新計算。</p>
+          <a class="btn btn-primary w-100" href="{{ url_for('checkout') }}">前往結帳</a>
         </div>
       </div>
     </div>
@@ -72,4 +50,8 @@
     </div>
   </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 {% endblock %}
