@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}商家商品管理｜校園點餐系統{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">商家商品管理</h1>
+  <p class="text-secondary mb-0">新增商品並查看目前商品列表。</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-4">
+    <div class="card">
+      <div class="card-header">新增商品</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('merchant_create_product') }}">
+          <div class="mb-3">
+            <label class="form-label" for="product-name">商品名稱</label>
+            <input class="form-control" id="product-name" type="text" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="product-price">商品價格（NT$）</label>
+            <input class="form-control" id="product-price" type="number" name="price" min="1" step="1" required>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">新增商品</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-8">
+    <div class="card">
+      <div class="card-header">商品列表</div>
+      {% if products %}
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">商品名稱</th>
+                <th scope="col">價格</th>
+                <th scope="col">狀態</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in products %}
+                <tr>
+                  <td>{{ product.name }}</td>
+                  <td>NT${{ product.price }}</td>
+                  <td>
+                    {% if product.is_available %}
+                      <span class="badge text-bg-success">上架中</span>
+                    {% else %}
+                      <span class="badge text-bg-secondary">已下架</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="card-body text-center py-5">
+          <p class="fs-5 mb-2">目前沒有商品</p>
+          <p class="text-secondary mb-0">使用左側表單新增第一項商品。</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

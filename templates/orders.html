@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}商家訂單｜校園點餐系統{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">商家訂單</h1>
+  <p class="text-secondary mb-0">查看學生訂單與付款狀態。</p>
+</div>
+
+{% if orders %}
+  <div class="table-responsive">
+    <table class="table align-middle bg-white">
+      <thead>
+        <tr>
+          <th scope="col">訂單編號</th>
+          <th scope="col">商品及數量</th>
+          <th scope="col">訂單總金額</th>
+          <th scope="col">付款狀態</th>
+          <th scope="col">建立時間</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td>{{ order.order_id }}</td>
+            <td>
+              {% for item in order.items %}
+                <div>{{ item.name }} × {{ item.quantity }}</div>
+              {% endfor %}
+            </td>
+            <td>NT${{ order.total }}</td>
+            <td>
+              {% if order.payment_status == 'paid' %}
+                <span class="badge text-bg-success">已付款</span>
+              {% else %}
+                <span class="badge text-bg-warning">未付款</span>
+              {% endif %}
+            </td>
+            <td>{{ order.created_at }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card border-0 bg-light">
+    <div class="card-body text-center py-5">
+      <p class="fs-5 mb-2">目前沒有訂單</p>
+      <p class="text-secondary mb-0">學生送出訂單後會顯示在這裡。</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
