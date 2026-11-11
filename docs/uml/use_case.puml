@@ -1,0 +1,79 @@
+@startuml
+title COS 校園點餐系統 - Use Case Diagram
+left to right direction
+skinparam defaultFontName "Microsoft JhengHei"
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+}
+
+actor "學生\nStudent" as Student
+actor "商家\nMerchant" as Merchant
+actor "維護者\nMaintainer" as Maintainer
+
+rectangle "COS 校園點餐系統" {
+  rectangle "學生功能" as StudentFeatures {
+    usecase "瀏覽商品菜單\nGET /menu" as UC_Menu
+    usecase "管理購物車\n/cart, /cart/add,\n/cart/update, /cart/remove" as UC_Cart
+    usecase "結帳並建立訂單\nGET /checkout\nPOST /orders/create" as UC_Order
+    usecase "模擬付款\nPOST /payment/mock" as UC_Pay
+  }
+
+  rectangle "商家功能" as MerchantFeatures {
+    usecase "管理商家商品\nGET/POST /merchant/products" as UC_Products
+    usecase "切換目前商家\nPOST /merchant/select" as UC_SelectMerchant
+    usecase "檢視全商家訂單\nGET /merchant/orders" as UC_MerchantOrders
+  }
+
+  rectangle "維護者功能" as MaintainerFeatures {
+    usecase "初始化／升級資料庫\nflask init-db / migrate-db\npython -m backend.seed" as UC_Database
+    usecase "健康檢查\nGET /health" as UC_Health
+  }
+
+  rectangle "共用後端驗證" as SharedFeatures {
+    usecase "驗證商品與計算金額" as UC_Validate
+    usecase "檢查訂單所有權" as UC_Owner
+  }
+}
+
+Student --> UC_Menu
+Student --> UC_Cart
+Student --> UC_Order
+Student --> UC_Pay
+
+Merchant --> UC_Products
+Merchant --> UC_SelectMerchant
+Merchant --> UC_MerchantOrders
+
+Maintainer --> UC_Database
+Maintainer --> UC_Health
+
+UC_Cart ..> UC_Validate : <<include>>
+UC_Order ..> UC_Validate : <<include>>
+UC_Pay ..> UC_Owner : <<include>>
+
+note right of Student
+  以 session["cart_token"] 模擬
+  非正式登入機制
+end note
+
+note right of Merchant
+  以 session["merchant_id"] 模擬
+  可透過 /merchant/select 切換
+end note
+
+note bottom of UC_Cart
+  加入、更新、移除、檢視購物車
+  皆為獨立路由，圖中合併呈現
+end note
+
+note bottom of UC_MerchantOrders
+  Demo 設計：顯示所有商家的訂單
+end note
+
+note bottom of UC_Order
+  一次結帳可依商家建立多張訂單
+  全部成功才清空購物車
+end note
+@enduml

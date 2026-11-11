@@ -1,0 +1,216 @@
+@startuml
+title COS 校園點餐系統 - Class Diagram（實際程式碼結構）
+skinparam defaultFontName "Microsoft JhengHei"
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam nodesep 35
+skinparam ranksep 45
+skinparam wrapWidth 260
+hide empty members
+
+package "Backend (Python)" {
+  class "backend.app" as AppModule <<module>> {
+    - _positive_int(value) : int | None
+    + create_app(test_config=None) : Flask
+    + ensure_demo_identity() : void
+    - _database_ready() : bool
+    + index() : Response
+    + health() : Response
+    + menu() : str
+    + cart() : str
+    + add_to_cart() : Response
+    + update_cart() : Response
+    + remove_cart_item() : Response
+    + checkout() : str
+    + create_order() : Response
+    + mock_payment() : Response
+    + current_merchant_id() : int
+    + merchant_products() : str
+    + merchant_create_product() : Response
+    + merchant_orders() : str
+    + merchant_select() : Response
+    + init_db_command() : void
+    + migrate_db_command() : void
+  }
+
+  class "backend.models" as ModelsModule <<module>> {
+    + get_db() : sqlite3.Connection
+    + close_db(error=None) : void
+    + init_db() : void
+    + migrate_legacy_db() : bool
+    + list_merchants() : list[dict]
+    + list_products() : list[dict]
+    + list_products_by_merchant(merchant_id) : list[dict]
+    + create_product(merchant_id, name, price) : int
+    + get_or_create_cart(session_token) : int
+    + add_cart_item(session_token, product_id, quantity) : void
+    + update_cart_item(session_token, product_id, quantity) : void
+    + remove_cart_item(session_token, product_id) : bool
+    + get_cart_groups(session_token) : tuple
+    + create_orders_from_cart(session_token, idempotency_key) : tuple
+    + get_orders_by_batch(session_token, batch_id) : list[Order]
+    + get_recent_orders(session_token) : list[Order]
+    + list_orders_by_merchant(merchant_id) : list[Order]
+    + list_orders() : list[Order]
+    + pay_order(session_token, order_id) : bool
+    - _table_exists(db, name) : bool
+    - _product_dict(row) : dict
+    - _load_orders(where, params) : list[Order]
+  }
+
+  class "backend.seed" as SeedModule <<module>> {
+    + DEFAULT_DATA : tuple
+    + seed_data() : void
+    + main() : void
+  }
+
+  class DomainError <<exception>>
+}
+
+package "Frontend (Browser)" {
+  class "static/js/cart.js" as CartJS <<IIFE>> {
+    - formatAmount(value) : string
+    - parseQuantity(input) : number
+    - recalculate() : void
+  }
+
+  class "templates/*.html" as Templates <<Jinja2 view>> {
+    base.html
+    menu.html
+    cart.html
+    checkout.html
+    merchant.html
+    orders.html
+    partials/navbar.html
+    partials/order_summary.html
+  }
+}
+
+package "Logical Data Structures（dict / sqlite3.Row）" as DataStructures {
+  class "SessionData" as SessionData <<dict>> {
+    cart_token : str
+    merchant_id : int
+    checkout_key : str
+  }
+
+  class "Merchant" as MerchantData <<dict>> {
+    id : int
+    name : str
+  }
+
+  class "Product" as ProductData <<dict>> {
+    id : int
+    merchant_id : int
+    merchant_name : str
+    name : str
+    description : str
+    price : int
+    image_url : str
+    is_available : bool
+  }
+
+  class "MerchantGroup" as MerchantGroupData <<dict>> {
+    merchant_id : int
+    merchant_name : str
+    items : list[CartItem]
+    subtotal : int
+  }
+
+  class "CartItem" as CartItemData <<dict>> {
+    merchant_id : int
+    product_id : int
+    name : str
+    unit_price : int
+    quantity : int
+    subtotal : int
+  }
+
+  class "Order" as OrderData <<dict>> {
+    order_id : int
+    merchant_id : int
+    merchant_name : str
+    created_at : str
+    items : list[OrderItem]
+    total : int
+    payment_status : str
+  }
+
+  class "OrderItem" as OrderItemData <<dict>> {
+    product_id : int
+    name : str
+    unit_price : int
+    quantity : int
+    subtotal : int
+  }
+}
+
+package "External" {
+  class "Flask" as FlaskApp <<external>> {
+    + config : dict
+  }
+
+  class "sqlite3.Connection" as SqliteConnection <<external>> {
+    + row_factory
+    + execute(sql, params)
+    + executescript(sql)
+    + commit()
+    + rollback()
+    + close()
+  }
+
+  class Exception <<external>>
+}
+
+AppModule ..> ModelsModule : calls
+AppModule ..> DomainError : catches
+AppModule ..> FlaskApp : creates / configures
+AppModule ..> Templates : render_template()
+AppModule ..> SessionData : reads / writes session
+ModelsModule ..> DomainError : raises
+ModelsModule --> SqliteConnection : executes SQL
+SeedModule --> AppModule : create_app()
+SeedModule --> ModelsModule : init_db() / get_db()
+Templates ..> CartJS : cart.html loads
+Exception <|-- DomainError
+
+ModelsModule ..> MerchantData : returns
+ModelsModule ..> ProductData : returns
+ModelsModule ..> MerchantGroupData : returns
+ModelsModule ..> CartItemData : returns
+ModelsModule ..> OrderData : returns
+ModelsModule ..> OrderItemData : returns
+
+MerchantData "1" -- "*" ProductData : merchant_id
+MerchantGroupData "1" *-- "*" CartItemData : items
+OrderData "1" *-- "*" OrderItemData : items
+
+note right of DomainError
+  程式碼中唯一的自訂 Python class
+  繼承 Exception，沒有額外屬性
+end note
+
+note bottom of DataStructures
+  這些名稱在程式碼中是 dict / sqlite3.Row 的資料形狀，
+  不是 Python class，也不是直接把 DB table 當成類別。
+  欄位來自 models.py 回傳值與 docs/ui-backend-contract.md。
+end note
+
+note bottom of AppModule
+  路由處理函式是 create_app() 內註冊的 closure；
+  此處以模組方法表示，並非獨立 class。
+end note
+
+note bottom of SessionData
+  程式碼沒有 Student / Merchant class。
+  角色只以 Flask session 的 cart_token / merchant_id 表示。
+end note
+
+note bottom of Templates
+  Jinja2 模板檔案，不是 Python class。
+end note
+
+note bottom of CartJS
+  static/js/cart.js 是 IIFE，沒有 class；
+  此處以模組方式列出內部函式。
+end note
+@enduml

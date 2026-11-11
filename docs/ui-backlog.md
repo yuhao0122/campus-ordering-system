@@ -1,8 +1,3 @@
-# UI Backlog（Day 1）
-
-> 本文件依 `UI_Agent_Work_Spec.md` 整理 UI 組的 User Stories、頁面清單與優先順序。
-> 路由名稱與模板變數為**暫定值**，需與後端組員確認後更新 `docs/ui-backend-contract.md`。
-
 ## 1. 範圍
 
 | 角色 | UI 範圍 |
@@ -105,7 +100,3 @@
 4. 訂單與訂單明細的欄位、付款狀態值（`unpaid`／`paid`）。
 5. 是否已有 Flash message 與 CSRF 設定；若無，表單如何處理。
 6. 金額單位與格式（整數新台幣或含小數）。
-
-## 5. 完成標準
-
-依 `UI_Agent_Work_Spec.md` 第 9 節 Definition of Done 執行；每個 Story 需在正常與至少一個錯誤情境下測試，並經另一位組員 Review。

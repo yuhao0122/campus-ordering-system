@@ -1,0 +1,101 @@
+@startuml
+title COS 校園點餐系統 - Sequence Diagram（Order Processing）
+autonumber
+skinparam defaultFontName "Microsoft JhengHei"
+skinparam sequenceMessageAlign left
+
+actor "學生\nStudent" as Student
+participant "Frontend\ncheckout.html" as FE
+participant "Flask Route\nbackend.app" as Route
+participant "Models\nbackend.models" as Models
+database "SQLite\ncampus_ordering.db" as DB
+
+Student -> FE : 前往結帳
+FE -> Route : GET /checkout
+Route -> Models : get_cart_groups(cart_token)
+Models -> DB : SELECT carts JOIN cart_items\nJOIN products JOIN merchants
+DB --> Models : rows
+Models --> Route : merchant_groups, total
+Route -> Models : get_recent_orders(cart_token)
+Models -> DB : SELECT orders + order_items
+DB --> Models : orders
+Models --> Route : orders
+Route -> Route : 若無 checkout_key 則產生 UUID
+Route --> FE : 200 checkout.html\n(idempotency_key, orders)
+
+Student -> FE : 確認送出訂單
+FE -> Route : POST /orders/create\n(idempotency_key)
+Route -> Route : 比對表單 key 與 session key
+alt key 不存在或不相符
+  Route --> FE : redirect /checkout\nFlash「結帳資訊已過期」
+else key 相符
+  Route -> Models : create_orders_from_cart(cart_token, key)
+  Models -> DB : BEGIN IMMEDIATE
+  Models -> DB : SELECT checkout_batches\nWHERE session_token, idempotency_key
+  alt 相同批次已存在
+    DB --> Models : batch
+    Models -> DB : COMMIT
+    Models --> Route : (batch_id, replayed=True)
+    Route --> FE : redirect /checkout\nFlash「未重複送出」
+  else 新批次
+    Models -> DB : SELECT cart_items JOIN products\nWHERE session_token
+    DB --> Models : rows
+    alt 購物車為空或商品已下架
+      Models -> DB : ROLLBACK
+      Models --> Route : raise DomainError
+      Route --> FE : redirect /checkout\nFlash 錯誤訊息
+    else 驗證通過
+      Models -> Models : 依 merchant_id 分組\n計算每個商家 total
+      Models -> DB : INSERT checkout_batches
+      loop 每個商家
+        Models -> DB : INSERT orders\n(payment_status='unpaid')
+        Models -> DB : INSERT order_items\n(name, unit_price 快照)
+      end
+      Models -> DB : DELETE cart_items
+      Models -> DB : COMMIT
+      Models --> Route : (batch_id, replayed=False)
+      Route --> FE : redirect /checkout\nFlash「訂單已建立」
+    end
+  end
+end
+
+note right of FE
+  建立訂單與付款後都會 redirect 到 /checkout；
+  隨後的 GET /checkout 會再次呼叫 get_recent_orders() 載入最新訂單。
+end note
+
+Student -> FE : 點擊模擬付款
+FE -> Route : POST /payment/mock\n(order_id)
+Route -> Models : pay_order(cart_token, order_id)
+Models -> DB : SELECT payment_status\nWHERE id AND session_token
+alt 訂單不存在或不屬於目前學生
+  DB --> Models : no row
+  Models --> Route : raise DomainError
+  Route --> FE : redirect /checkout\nFlash「找不到可付款的訂單」
+else 已付款
+  DB --> Models : payment_status='paid'
+  Models --> Route : False
+  Route --> FE : redirect /checkout\nFlash「此訂單已付款」
+else 未付款
+  DB --> Models : payment_status='unpaid'
+  Models -> DB : UPDATE orders SET payment_status='paid'
+  Models --> Route : True
+  Route --> FE : redirect /checkout\nFlash「模擬付款成功」
+end
+
+note over Student, FE
+  使用者操作瀏覽器；付款僅為模擬流程
+  不進行真實扣款
+end note
+
+note over Route
+  路由層只接受 product_id / quantity /
+  idempotency_key / order_id 等識別資料
+  金額與商家由後端決定
+end note
+
+note over Models, DB
+  建單在同一個 transaction 內完成
+  失敗時全部 rollback，購物車保持不變
+end note
+@enduml
